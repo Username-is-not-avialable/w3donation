@@ -331,6 +331,11 @@
             const description = document.getElementById("campaignDescription").value;
             const target = document.getElementById("campaignTarget").value;
 
+            if (typeof contract == 'undefined'){
+                alert("Сначала подключите кошелёк")
+                return
+            }
+
             if (!name || !description || !target) {
                 alert("Please fill in all fields!");
                 return;
@@ -352,6 +357,11 @@
             // Получение ID кампании и суммы пожертвования из формы
             const campaignId = document.getElementById("donateCampaignId").value;
             const amount = document.getElementById("donateAmount").value;
+
+            if (typeof contract == 'undefined'){
+                alert("Сначала подключите кошелёк")
+                return
+            }
 
             if (!campaignId || !amount) {
                 alert("Please fill in both Campaign ID and Amount");
@@ -375,6 +385,11 @@
 
         async function deactivateCampaign() {
             const campaignId = document.getElementById("campaignId").value;
+
+            if (typeof contract == 'undefined'){
+                alert("Сначала подключите кошелёк")
+                return
+            }
 
             if (!campaignId) {
                 alert("Please enter a campaign ID!");
