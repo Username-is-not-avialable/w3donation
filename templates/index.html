@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decentralized Campaigns</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        input, textarea {
+            display: block;
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Campaigns DApp</h1>
+    <button id="connectButton">Connect Wallet</button>
+    <p id="wallet-address" class="hidden"></p>
+
+    <h2>Create a Campaign</h2>
+    <input id="campaignName" placeholder="Campaign Name" />
+    <textarea id="campaignDescription" placeholder="Campaign Description"></textarea>
+    <input id="campaignTarget" type="number" placeholder="Target (ETH)" />
+    <button id="createCampaignButton">Create Campaign</button>
+
+
+    <div>
+        <h3>Donate to a Campaign</h3>
+        <label for="donateCampaignId">Campaign ID:</label>
+        <input type="text" id="donateCampaignId" placeholder="Enter Campaign ID" />
+        <label for="donateAmount">Amount (in ETH):</label>
+        <input type="text" id="donateAmount" placeholder="Enter amount in ETH" />
+        <button onclick="donate()">Donate</button>
+    </div>
+
+    <h2>Deactivate Campaign</h2>
+    <input id="campaignId" type="number" placeholder="Campaign ID" />
+    <button id="deactivateCampaignButton">Deactivate Campaign</button>
+
+    <h2>Get Campaign Details</h2>
+    <input id="campaignIdDetails" type="number" placeholder="Campaign ID" />
+    <button id="getCampaignDetailsButton">Get Details</button>
+    <pre id="campaignDetails"></pre>
+
+
+    <script>
+        const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Замените на ваш адрес
+        const ABI = CONTRACT_ABI =[
+        {
+            "inputs": [
+            {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "description",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "target",
+                "type": "uint256"
+            }
+            ],
+            "name": "createCampaign",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "campaignId",
+                "type": "uint256"
+            }
+            ],
+            "name": "deactivateCampaign",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "campaignId",
+                "type": "uint256"
+            }
+            ],
+            "name": "donate",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "campaignId",
+                "type": "uint256"
+            }
+            ],
+            "name": "getCampaign",
+            "outputs": [
+            {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "description",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "target",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "funds",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "active",
+                "type": "bool"
+            }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "campaignId",
+                "type": "uint256"
+            }
+            ],
+            "name": "withdrawFunds",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "campaignId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+            ],
+            "name": "contributions",
+            "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "campaigns",
+            "outputs": [
+            {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "description",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "target",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "funds",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "active",
+                "type": "bool"
+            }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "anonymous": "false",
+            "inputs": [
+            {
+                "indexed": "false",
+                "internalType": "uint256",
+                "name": "campaignId",
+                "type": "uint256"
+            },
+            {
+                "indexed": "false",
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "indexed": "false",
+                "internalType": "uint256",
+                "name": "target",
+                "type": "uint256"
+            }
+            ],
+            "name": "CampaignCreated",
+            "type": "event"
+        },
+        {
+            "anonymous": "false",
+            "inputs": [
+            {
+                "indexed": "false",
+                "internalType": "uint256",
+                "name": "campaignId",
+                "type": "uint256"
+            },
+            {
+                "indexed": "false",
+                "internalType": "address",
+                "name": "donor",
+                "type": "address"
+            },
+            {
+                "indexed": "false",
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+            ],
+            "name": "DonationReceived",
+            "type": "event"
+        },
+        {
+            "anonymous": "false",
+            "inputs": [
+            {
+                "indexed": "false",
+                "internalType": "uint256",
+                "name": "campaignId",
+                "type": "uint256"
+            },
+            {
+                "indexed": "false",
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+            ],
+            "name": "FundsWithdrawn",
+            "type": "event"
+        }
+        ];
+
+        let provider, signer, contract;
+
+        async function connectWallet() {
+            try {
+                if (!window.ethereum) {
+                    alert("MetaMask не установлен. Пожалуйста, установите MetaMask и попробуйте снова.");
+                    return;
+                }
+
+                // Запрашиваем доступ к кошельку пользователя
+                const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+
+                contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+                console.log("Подключенный аккаунт:", accounts[0]);
+                console.log("Signer:", signer);
+
+                document.getElementById("wallet-address").textContent = `Подключённый адрес: ${accounts[0]}`;
+                document.getElementById("wallet-address").classList.remove("hidden")
+            } catch (error) {
+                console.error("Ошибка подключения кошелька:", error);
+                alert("Не удалось подключить кошелёк: " + error.message);
+            }
+        }
+
+        async function createCampaign() {
+            const name = document.getElementById("campaignName").value;
+            const description = document.getElementById("campaignDescription").value;
+            const target = document.getElementById("campaignTarget").value;
+
+            if (!name || !description || !target) {
+                alert("Please fill in all fields!");
+                return;
+            }
+
+            try {
+                const tx = await contract.createCampaign(name, description, ethers.utils.parseEther(target));
+                alert(`Transaction sent! Hash: ${tx.hash}`);
+                await tx.wait();
+                alert("Transaction confirmed!");
+            } catch (err) {
+                console.error(err);
+                alert("Failed to create campaign!");
+            }
+        }
+
+        async function donate() {
+        try {
+            // Получение ID кампании и суммы пожертвования из формы
+            const campaignId = document.getElementById("donateCampaignId").value;
+            const amount = document.getElementById("donateAmount").value;
+
+            if (!campaignId || !amount) {
+                alert("Please fill in both Campaign ID and Amount");
+                return;
+            }
+
+            // Запрос к контракту с передачей value для пожертвования
+            const tx = await contract.donate(campaignId, {
+                value: ethers.utils.parseEther(amount) // Конвертируем эфир в wei
+            });
+
+            // Ожидание подтверждения транзакции
+            await tx.wait();
+
+            alert(`Donation successful! Transaction hash: ${tx.hash}`);
+        } catch (error) {
+            console.error("Error while donating:", error);
+            alert(`Error while donating: ${error.message}`);
+        }
+    }
+
+        async function deactivateCampaign() {
+            const campaignId = document.getElementById("campaignId").value;
+
+            if (!campaignId) {
+                alert("Please enter a campaign ID!");
+                return;
+            }
+
+            try {
+                const tx = await contract.deactivateCampaign(campaignId);
+                alert(`Transaction sent! Hash: ${tx.hash}`);
+                await tx.wait();
+                alert("Campaign deactivated!");
+            } catch (err) {
+                console.error(err);
+                alert("Failed to deactivate campaign!");
+            }
+        }
+
+        async function getCampaignDetails() {
+            if (typeof contract == 'undefined'){
+                alert("Сначала подключите кошелёк")
+                return
+            }
+            const campaignId = document.getElementById("campaignIdDetails").value;
+
+            if (!campaignId) {
+                alert("Please enter a campaign ID!");
+                return;
+            }
+
+            try {
+                const campaign = await contract.getCampaign(campaignId);
+                document.getElementById("campaignDetails").textContent = JSON.stringify({
+                    name: campaign[0],
+                    description: campaign[1],
+                    owner: campaign[2],
+                    target: ethers.utils.formatEther(campaign[3]),
+                    funds: ethers.utils.formatEther(campaign[4]),
+                    active: campaign[5],
+                }, null, 2);
+            } catch (err) {
+                console.error(err);
+                alert("Failed to fetch campaign details!");
+            }
+        }
+
+        document.getElementById("connectButton").addEventListener("click", connectWallet);
+        document.getElementById("createCampaignButton").addEventListener("click", createCampaign);
+        document.getElementById("deactivateCampaignButton").addEventListener("click", deactivateCampaign);
+        document.getElementById("getCampaignDetailsButton").addEventListener("click", getCampaignDetails);
+    </script>
+</body>
+</html>
